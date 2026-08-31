@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SKY Quiz - Interactive Online Quiz & Trivia App</title>
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body class="text-slate-100 antialiased selection:bg-indigo-500 selection:text-white">
+
+  <!-- Canvas Confetti Overlay -->
+  <canvas id="confettiCanvas"></canvas>
+
+  <!-- Main Container -->
+  <div class="min-h-screen flex flex-col">
+
+    <!-- Top Navigation Header -->
+    <header class="sticky top-0 z-40 glass-panel border-b border-white/10 px-4 sm:px-8 py-3.5 flex items-center justify-between">
+      <!-- App Brand Logo -->
+      <div class="flex items-center gap-3 cursor-pointer" onclick="app.showView('home')">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 via-purple-600 to-pink-500 flex items-center justify-center shadow-lg shadow-indigo-500/30">
+          <i class="fas fa-brain text-white text-xl"></i>
+        </div>
+        <div>
+          <h1 class="text-xl font-bold tracking-tight gradient-text">SKYQuiz</h1>
+          <p class="text-xs text-gray-400 font-medium">Interactive Trivia & Quiz Creator</p>
+        </div>
+      </div>
+
+      <!-- Navigation Actions -->
+      <nav class="flex items-center gap-2 sm:gap-4">
+        <button onclick="app.showView('home')" class="nav-link px-3 py-1.5 rounded-lg text-sm font-medium hover:bg-white/5 transition-colors flex items-center gap-2">
+          <i class="fas fa-th-large text-indigo-400"></i>
+          <span class="hidden sm:inline">Library</span>
+        </button>
+
+        <button onclick="app.showView('creator')" class="nav-link px-3 py-1.5 rounded-lg text-sm font-medium hover:bg-white/5 transition-colors flex items-center gap-2">
+          <i class="fas fa-plus-circle text-pink-400"></i>
+          <span class="hidden sm:inline">Create Quiz</span>
+        </button>
+
+        <button onclick="app.showView('history')" class="nav-link px-3 py-1.5 rounded-lg text-sm font-medium hover:bg-white/5 transition-colors flex items-center gap-2">
+          <i class="fas fa-trophy text-amber-400"></i>
+          <span class="hidden sm:inline">Leaderboard</span>
+        </button>
+
+        <!-- Audio Toggle Button -->
+        <button id="btnAudioToggle" onclick="app.toggleAudio()" class="w-9 h-9 rounded-lg glass-card flex items-center justify-center text-gray-300 hover:text-white transition-all ml-1" title="Toggle Sound Effects">
+          <i class="fas fa-volume-up text-sm"></i>
+        </button>
+      </nav>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+
+      <!-- ================= VIEW 1: HOME / QUIZ LIBRARY ================= -->
+      <section id="viewHome" class="view-section active space-y-8">
+        
+        <!-- Hero Stats Banner -->
+        <div class="glass-card rounded-2xl p-6 sm:p-8 relative overflow-hidden border border-indigo-500/20 bg-gradient-to-r from-indigo-950/40 via-purple-950/30 to-slate-900/60">
+          <div class="absolute -right-12 -top-12 w-64 h-64 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none"></div>
+          
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-center">
+            <div class="lg:col-span-2 space-y-3">
+              <span class="px-3 py-1 rounded-full text-xs font-semibold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 inline-flex items-center gap-1.5">
+                <i class="fas fa-bolt text-amber-400"></i> Challenge Your Mind
+              </span>
+              <h2 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+                Master Trivia, Test Skills & <span class="gradient-text">Build Custom Quizzes</span>
+              </h2>
+              <p class="text-gray-300 text-sm sm:text-base max-w-2xl">
+                Choose from preset quiz topics, earn speed bonuses, maintain streak combos, or craft your own custom quizzes with our intuitive editor.
+              </p>
+              
+              <div class="pt-2 flex flex-wrap items-center gap-3">
+                <button onclick="app.startRandomQuiz()" class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-pink-600 text-white font-semibold text-sm shadow-lg shadow-indigo-600/30 hover:opacity-95 transition-all flex items-center gap-2">
+                  <i class="fas fa-random"></i> Quick Random Quiz
+                </button>
+                <button onclick="app.showView('creator')" class="px-5 py-2.5 rounded-xl glass-panel text-white font-semibold text-sm hover:bg-white/10 transition-all flex items-center gap-2 border border-white/15">
+                  <i class="fas fa-pen-nib text-pink-400"></i> Build Custom Quiz
+                </button>
+              </div>
+            </div>
+
+            <!-- Mini User Quick Stats -->
+            <div class="glass-panel p-5 rounded-xl grid grid-cols-2 gap-4 border border-white/10">
+              <div class="text-center p-3 rounded-lg bg-slate-900/50">
+                <p class="text-xs text-gray-400 font-medium">Quizzes Completed</p>
+                <p id="statQuizzesTaken" class="text-2xl font-extrabold text-indigo-400 mt-1">0</p>
+              </div>
+              <div class="text-center p-3 rounded-lg bg-slate-900/50">
+                <p class="text-xs text-gray-400 font-medium">Highest Score</p>
+                <p id="statHighestScore" class="text-2xl font-extrabold text-emerald-400 mt-1">0</p>
+              </div>
+              <div class="text-center p-3 rounded-lg bg-slate-900/50">
+                <p class="text-xs text-gray-400 font-medium">Total Correct</p>
+                <p id="statTotalCorrect" class="text-2xl font-extrabold text-pink-400 mt-1">0</p>
+              </div>
+              <div class="text-center p-3 rounded-lg bg-slate-900/50">
+                <p class="text-xs text-gray-400 font-medium">Best Streak</p>
+                <p id="statHighestStreak" class="text-2xl font-extrabold text-amber-400 mt-1">0 🔥</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Mode & Category Filter Tabs -->
+        <div class="flex flex-wrap items-center justify-between gap-4 border-b border-white/10 pb-4">
+          <div class="flex items-center gap-2 overflow-x-auto pb-2 sm:pb-0" id="categoryFilterContainer">
+            <button onclick="app.filterCategory('all')" class="cat-filter-btn px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold bg-indigo-600 text-white transition-all" data-cat="all">
+              All Quizzes
+            </button>
+            <button onclick="app.filterCategory('Technology')" class="cat-filter-btn px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold glass-card text-gray-300 hover:text-white transition-all" data-cat="Technology">
+              <i class="fas fa-code mr-1"></i> Tech & Code
+            </button>
+            <button onclick="app.filterCategory('Science')" class="cat-filter-btn px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold glass-card text-gray-300 hover:text-white transition-all" data-cat="Science">
+              <i class="fas fa-atom mr-1"></i> Science
+            </button>
+            <button onclick="app.filterCategory('Entertainment')" class="cat-filter-btn px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold glass-card text-gray-300 hover:text-white transition-all" data-cat="Entertainment">
+              <i class="fas fa-film mr-1"></i> Pop Culture
+            </button>
+            <button onclick="app.filterCategory('Gaming')" class="cat-filter-btn px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold glass-card text-gray-300 hover:text-white transition-all" data-cat="Gaming">
+              <i class="fas fa-gamepad mr-1"></i> Gaming
+            </button>
+            <button onclick="app.filterCategory('Geography')" class="cat-filter-btn px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold glass-card text-gray-300 hover:text-white transition-all" data-cat="Geography">
+              <i class="fas fa-globe mr-1"></i> Geography
+            </button>
+            <button onclick="app.filterCategory('Custom')" class="cat-filter-btn px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold glass-card text-gray-300 hover:text-white transition-all" data-cat="Custom">
+              <i class="fas fa-user-edit mr-1"></i> Custom Quizzes
+            </button>
+          </div>
+
+          <!-- Gameplay Mode Picker -->
+          <div class="flex items-center gap-2 bg-slate-900/60 p-1 rounded-xl border border-white/10 text-xs">
+            <span class="px-2 text-gray-400 font-medium">Mode:</span>
+            <select id="gameplayModeSelect" class="bg-transparent text-indigo-300 font-semibold focus:outline-none cursor-pointer py-1 px-1">
+              <option value="standard" class="bg-slate-900 text-white">Standard (Timed)</option>
+              <option value="rapid" class="bg-slate-900 text-white">Rapid Fire (10s)</option>
+              <option value="survival" class="bg-slate-900 text-white">Survival (1 Life)</option>
+              <option value="practice" class="bg-slate-900 text-white">Practice (Untimed)</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Quizzes Grid -->
+        <div id="quizzesGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <!-- Quiz Cards will be dynamically injected here -->
+        </div>
+
+      </section>
+
+
+      <!-- ================= VIEW 2: QUIZ ARENA (PLAYING) ================= -->
+      <section id="viewArena" class="view-section space-y-6 max-w-4xl mx-auto">
+        
+        <!-- Arena Header Bar -->
+        <div class="glass-card rounded-2xl p-4 sm:p-6 border border-indigo-500/20 shadow-xl space-y-4">
+          <div class="flex items-center justify-between">
+            <button onclick="app.quitQuiz()" class="text-xs text-gray-400 hover:text-rose-400 font-semibold flex items-center gap-1.5 transition-colors">
+              <i class="fas fa-arrow-left"></i> Quit Quiz
+            </button>
+
+            <h3 id="arenaQuizTitle" class="text-base sm:text-lg font-bold text-white truncate max-w-xs sm:max-w-md">
+              Quiz Title
+            </h3>
+
+            <!-- Live Score & Streak Badge -->
+            <div class="flex items-center gap-3">
+              <div id="arenaStreakBadge" class="hidden streak-badge px-2.5 py-1 rounded-full text-xs font-bold text-white flex items-center gap-1">
+                <i class="fas fa-fire"></i> <span id="arenaStreakVal">0</span>x
+              </div>
+              <div class="text-right">
+                <p class="text-xs text-gray-400 font-medium">Score</p>
+                <p id="arenaScoreVal" class="text-lg font-extrabold text-indigo-400 font-mono">0</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Timer & Progress Row -->
+          <div class="flex items-center gap-4 pt-2">
+            <!-- Circular Countdown Timer SVG -->
+            <div class="relative w-14 h-14 flex-shrink-0 flex items-center justify-center">
+              <svg class="w-14 h-14" viewBox="0 0 36 36">
+                <path class="text-slate-800" stroke-width="3" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                <path id="timerCirclePath" class="timer-ring-circle text-indigo-500" stroke-dasharray="100, 100" stroke-dashoffset="0" stroke-width="3.5" stroke-linecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+              </svg>
+              <span id="timerTextVal" class="absolute text-sm font-extrabold text-white font-mono">20</span>
+            </div>
+
+            <!-- Horizontal Progress Bar -->
+            <div class="flex-grow space-y-1.5">
+              <div class="flex justify-between text-xs font-semibold">
+                <span id="arenaQProgressText" class="text-gray-300">Question 1 of 5</span>
+                <span id="arenaDifficultyBadge" class="text-indigo-400">Medium</span>
+              </div>
+              <div class="w-full bg-slate-900/80 rounded-full h-2.5 overflow-hidden border border-white/10">
+                <div id="arenaProgressBar" class="bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 h-2.5 rounded-full transition-all duration-300" style="width: 20%;"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Powerups & Actions Bar -->
+        <div class="flex items-center justify-between text-xs sm:text-sm">
+          <div class="flex items-center gap-2">
+            <button id="btnPowerupFifty" onclick="app.useFiftyFifty()" class="px-3.5 py-2 rounded-xl glass-card text-amber-300 hover:bg-amber-500/20 transition-all font-semibold flex items-center gap-1.5 border border-amber-500/30">
+              <i class="fas fa-magic"></i> 50:50 Power-up
+            </button>
+
+            <button id="btnToggleHint" onclick="app.toggleHint()" class="px-3.5 py-2 rounded-xl glass-card text-blue-300 hover:bg-blue-500/20 transition-all font-semibold flex items-center gap-1.5 border border-blue-500/30">
+              <i class="fas fa-lightbulb"></i> Hint
+            </button>
+          </div>
+
+          <button onclick="app.skipQuestion()" class="px-3.5 py-2 rounded-xl glass-card text-gray-400 hover:text-white transition-all font-medium flex items-center gap-1">
+            Skip <i class="fas fa-chevron-right text-xs"></i>
+          </button>
+        </div>
+
+        <!-- Hint Banner (Hidden by default) -->
+        <div id="arenaHintContainer" class="hidden glass-card p-4 rounded-xl border border-amber-500/40 bg-amber-950/20 text-amber-200 text-xs sm:text-sm flex items-start gap-3">
+          <i class="fas fa-lightbulb text-amber-400 text-lg mt-0.5"></i>
+          <div>
+            <p class="font-bold text-amber-300">Hint:</p>
+            <p id="arenaHintText">Hint description here...</p>
+          </div>
+        </div>
+
+        <!-- Question Display Card -->
+        <div class="glass-card rounded-2xl p-6 sm:p-8 space-y-6 border border-white/10 shadow-2xl relative">
+          <h3 id="arenaQuestionText" class="text-xl sm:text-2xl font-extrabold text-white leading-snug">
+            Question text goes here?
+          </h3>
+
+          <!-- Options Grid -->
+          <div id="arenaOptionsContainer" class="grid grid-cols-1 gap-3.5">
+            <!-- Option buttons injected here -->
+          </div>
+
+          <!-- Feedback & Explanation Box (Shown after selecting option) -->
+          <div id="arenaExplanationBox" class="hidden p-4 rounded-xl glass-panel border border-white/15 space-y-2">
+            <div class="flex items-center gap-2 font-bold text-sm" id="arenaFeedbackTitle">
+              <i class="fas fa-check-circle text-emerald-400"></i> Correct!
+            </div>
+            <p id="arenaExplanationText" class="text-xs sm:text-sm text-gray-300 leading-relaxed">
+              Explanation goes here...
+            </p>
+          </div>
+
+          <!-- Arena Footer Navigation -->
+          <div class="pt-2 flex justify-end">
+            <button id="btnNextQuestion" onclick="app.nextQuestion()" disabled class="px-6 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-sm shadow-lg shadow-indigo-600/30 transition-all opacity-50 cursor-not-allowed flex items-center gap-2">
+              <span>Next Question</span>
+              <i class="fas fa-arrow-right"></i>
+            </button>
+          </div>
+        </div>
+
+      </section>
+
+
+      <!-- ================= VIEW 3: RESULTS SCREEN ================= -->
+      <section id="viewResults" class="view-section space-y-8 max-w-4xl mx-auto">
+        
+        <!-- Score Card Hero -->
+        <div class="glass-card rounded-3xl p-8 sm:p-10 text-center space-y-6 border border-indigo-500/30 bg-gradient-to-b from-indigo-950/40 to-slate-900/80 shadow-2xl relative overflow-hidden">
+          <div class="inline-block p-4 rounded-full bg-indigo-600/20 border border-indigo-500/40 text-4xl mb-2">
+            <span id="resultsRankBadge">🏆</span>
+          </div>
+
+          <div class="space-y-1">
+            <h2 id="resultsRankTitle" class="text-3xl sm:text-4xl font-extrabold text-white">Quiz Whiz!</h2>
+            <p id="resultsQuizName" class="text-indigo-300 text-sm font-medium">Web Tech & Code Masters</p>
+          </div>
+
+          <!-- Big Animated Score Circle -->
+          <div class="py-4 flex justify-center">
+            <div class="w-36 h-36 rounded-full border-4 border-indigo-500/40 bg-slate-900/90 flex flex-col items-center justify-center shadow-2xl shadow-indigo-500/20">
+              <span id="resultsPercentage" class="text-4xl font-extrabold text-white font-mono">80%</span>
+              <span id="resultsScorePoints" class="text-xs font-semibold text-indigo-400">450 Points</span>
+            </div>
+          </div>
+
+          <!-- Key Metrics Grid -->
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 max-w-2xl mx-auto text-center">
+            <div class="glass-panel p-3.5 rounded-xl border border-white/10">
+              <p class="text-xs text-gray-400 font-medium">Correct Answers</p>
+              <p id="resultsCorrectRatio" class="text-lg font-bold text-emerald-400 mt-1">4 / 5</p>
+            </div>
+            <div class="glass-panel p-3.5 rounded-xl border border-white/10">
+              <p class="text-xs text-gray-400 font-medium">Highest Streak</p>
+              <p id="resultsMaxStreak" class="text-lg font-bold text-amber-400 mt-1">3 🔥</p>
+            </div>
+            <div class="glass-panel p-3.5 rounded-xl border border-white/10">
+              <p class="text-xs text-gray-400 font-medium">Time Taken</p>
+              <p id="resultsTotalTime" class="text-lg font-bold text-cyan-400 mt-1 font-mono">42s</p>
+            </div>
+            <div class="glass-panel p-3.5 rounded-xl border border-white/10">
+              <p class="text-xs text-gray-400 font-medium">Rank Achieved</p>
+              <p id="resultsRankShort" class="text-lg font-bold text-purple-400 mt-1 truncate">Whiz</p>
+            </div>
+          </div>
+
+          <!-- Action Buttons -->
+          <div class="pt-4 flex flex-wrap items-center justify-center gap-4">
+            <button onclick="app.replayActiveQuiz()" class="px-6 py-3 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:opacity-90 text-white font-bold text-sm shadow-lg shadow-indigo-600/30 transition-all flex items-center gap-2">
+              <i class="fas fa-redo"></i> Play Again
+            </button>
+            <button onclick="app.showView('home')" class="px-6 py-3 rounded-xl glass-panel hover:bg-white/10 text-white font-semibold text-sm transition-all flex items-center gap-2 border border-white/15">
+              <i class="fas fa-th-large"></i> More Quizzes
+            </button>
+          </div>
+        </div>
+
+        <!-- Detailed Questions Review Breakdown -->
+        <div class="space-y-4">
+          <h3 class="text-xl font-bold text-white flex items-center gap-2">
+            <i class="fas fa-list-check text-indigo-400"></i> Detailed Question Review
+          </h3>
+          <div id="resultsReviewContainer" class="space-y-3">
+            <!-- Review items injected here -->
+          </div>
+        </div>
+
+      </section>
+
+
+      <!-- ================= VIEW 4: CUSTOM QUIZ CREATOR ================= -->
+      <section id="viewCreator" class="view-section space-y-6 max-w-4xl mx-auto">
+        
+        <div class="flex items-center justify-between border-b border-white/10 pb-4">
+          <div>
+            <h2 class="text-2xl font-extrabold text-white">Create Custom Quiz</h2>
+            <p class="text-xs text-gray-400">Design custom questions, set choices, and save to your library.</p>
+          </div>
+          <div class="flex items-center gap-2">
+            <!-- Import JSON -->
+            <label class="px-3.5 py-2 rounded-xl glass-card text-xs font-semibold text-indigo-300 hover:text-white cursor-pointer transition-all flex items-center gap-1.5 border border-indigo-500/30">
+              <i class="fas fa-file-import"></i> Import JSON
+              <input type="file" id="jsonFileInput" accept=".json" class="hidden" onchange="app.importQuizJSON(event)" />
+            </label>
+            <button onclick="app.showView('home')" class="px-3.5 py-2 rounded-xl glass-card text-xs font-semibold text-gray-400 hover:text-white transition-all">
+              Cancel
+            </button>
+          </div>
+        </div>
+
+        <!-- Quiz Settings Form -->
+        <div class="glass-card rounded-2xl p-6 border border-white/10 space-y-4">
+          <h3 class="text-sm font-bold text-indigo-400 uppercase tracking-wider">General Information</h3>
+          
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-xs font-semibold text-gray-300 mb-1">Quiz Title *</label>
+              <input type="text" id="quizTitleInput" class="form-input text-sm" placeholder="e.g. Marvel Cinematic Universe Trivia" required />
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-gray-300 mb-1">Category *</label>
+              <select id="quizCategorySelect" class="form-input text-sm">
+                <option value="Technology">Technology & Coding</option>
+                <option value="Science">Science & Space</option>
+                <option value="Entertainment">Pop Culture & Cinema</option>
+                <option value="Gaming">Gaming & Esports</option>
+                <option value="Geography">Geography & Travel</option>
+                <option value="General">General Knowledge</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-gray-300 mb-1">Timer per Question (seconds)</label>
+              <select id="quizTimeSelect" class="form-input text-sm">
+                <option value="10">10 Seconds (Fast)</option>
+                <option value="15">15 Seconds</option>
+                <option value="20" selected>20 Seconds (Standard)</option>
+                <option value="30">30 Seconds</option>
+                <option value="45">45 Seconds (Relaxed)</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-gray-300 mb-1">Difficulty</label>
+              <select id="quizDifficultySelect" class="form-input text-sm">
+                <option value="Easy">Easy</option>
+                <option value="Medium" selected>Medium</option>
+                <option value="Hard">Hard</option>
+              </select>
+            </div>
+
+            <div class="md:col-span-2">
+              <label class="block text-xs font-semibold text-gray-300 mb-1">Short Description</label>
+              <input type="text" id="quizDescInput" class="form-input text-sm" placeholder="Brief summary of what this quiz tests..." />
+            </div>
+          </div>
+        </div>
+
+        <!-- Questions Editor Section -->
+        <div class="space-y-4">
+          <div class="flex items-center justify-between">
+            <h3 class="text-sm font-bold text-indigo-400 uppercase tracking-wider">Questions & Answers Editor</h3>
+            <button type="button" onclick="quizCreator.addQuestionBlock()" class="px-3.5 py-1.5 rounded-xl bg-indigo-600/30 hover:bg-indigo-600/50 text-indigo-300 text-xs font-bold transition-all flex items-center gap-1.5 border border-indigo-500/40">
+              <i class="fas fa-plus"></i> Add Question
+            </button>
+          </div>
+
+          <!-- Questions List -->
+          <div id="creatorQuestionsList" class="space-y-4">
+            <!-- Dynamic questions injected here -->
+          </div>
+
+          <div class="pt-4 flex items-center justify-between">
+            <button type="button" onclick="quizCreator.addQuestionBlock()" class="px-4 py-2.5 rounded-xl glass-card text-xs font-semibold text-gray-300 hover:text-white transition-all flex items-center gap-2">
+              <i class="fas fa-plus text-indigo-400"></i> Add Another Question
+            </button>
+
+            <button type="button" onclick="app.saveCustomQuiz()" class="px-6 py-3 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:opacity-95 text-white font-bold text-sm shadow-lg shadow-emerald-600/30 transition-all flex items-center gap-2">
+              <i class="fas fa-save"></i> Save & Launch Quiz
+            </button>
+          </div>
+        </div>
+
+      </section>
+
+
+      <!-- ================= VIEW 5: LEADERBOARD & HISTORY ================= -->
+      <section id="viewHistory" class="view-section space-y-6 max-w-4xl mx-auto">
+        <div class="flex items-center justify-between border-b border-white/10 pb-4">
+          <div>
+            <h2 class="text-2xl font-extrabold text-white">Quiz History & High Scores</h2>
+            <p class="text-xs text-gray-400">Review past performances, accuracy records, and high scores.</p>
+          </div>
+          <button onclick="app.clearHistory()" class="px-3.5 py-2 rounded-xl glass-card text-xs font-semibold text-rose-400 hover:bg-rose-500/20 transition-all flex items-center gap-1.5 border border-rose-500/30">
+            <i class="fas fa-trash-alt"></i> Clear History
+          </button>
+        </div>
+
+        <div class="glass-card rounded-2xl overflow-hidden border border-white/10">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-sm text-gray-300">
+              <thead class="bg-slate-900/80 text-xs uppercase text-gray-400 border-b border-white/10">
+                <tr>
+                  <th class="py-3.5 px-4 font-semibold">Date</th>
+                  <th class="py-3.5 px-4 font-semibold">Quiz Title</th>
+                  <th class="py-3.5 px-4 font-semibold">Category</th>
+                  <th class="py-3.5 px-4 font-semibold">Score</th>
+                  <th class="py-3.5 px-4 font-semibold">Accuracy</th>
+                  <th class="py-3.5 px-4 font-semibold">Rank</th>
+                </tr>
+              </thead>
+              <tbody id="historyTableBody" class="divide-y divide-white/5 font-medium">
+                <!-- History rows injected here -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- JavaScript App Modules -->
+  <script src="js/audio.js"></script>
+  <script src="js/storage.js"></script>
+  <script src="js/quizzes.js"></script>
+  <script src="js/quizEngine.js"></script>
+  <script src="js/creator.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
